@@ -1,0 +1,4 @@
+image: renewdoit/docker-clj-build:1.0.2
+unit-test:
+  script:
+    - lein test
