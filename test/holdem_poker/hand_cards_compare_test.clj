@@ -87,7 +87,7 @@
 
 (deftest max-cards-type-test
   (are [cards-types result]
-    (= (max-cards-type cards-types) result)
+    (= (max-hand-cards cards-types) result)
 
     [{:position 0
       :cards-type [:royal-flush [[:s :a] [:s :k] [:s :q] [:s :j] [:s :t]]]}
