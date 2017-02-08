@@ -1,4 +1,4 @@
-(ns holdem-poker.cards-type-compare
+(ns holdem-poker.hand-cards-compare
   "牌型评分单元，对于输入的每个牌型进行评分，输出该牌型的分值")
 
 (defn type-score
@@ -37,26 +37,30 @@
 
 (defn type-compare
   "牌型比较
-  cards-types: [{:cards-type [:one-pair [:one-pair [[:h :7] [:c :7] [:h :a] [:d :9] [:h :8]]]
-                 :other-keys other-vals}
-                 ...]
-
-  map结构中:cards-type是必带的一个kv, 其他k-v可携带其他信息，本函数不会破坏map结构，只是根据map中的牌型评分、排序
+  本函数不会破坏hand-cards的map结构，只是根据map中的牌型评分、排序
   输出：从小到大输出"
-  [cards-types]
+  [hand-cards-list]
   (let [a-fn (fn [position-cards-type]
                (let [cards-type (:cards-type position-cards-type)
                      score (type-score cards-type)]
                  [score position-cards-type]))]
-    (->> (map a-fn cards-types)
+    (->> (map a-fn hand-cards-list)
          (group-by first)
          (map (fn [[k v]] {k (map last v)}))
          (apply merge)
          (sort-by first))))
 
-(defn max-cards-type
-  "取出对大的牌型，可能有多个，用[cards-type1 cards-type2]表示"
-  [cards-types]
-  (->> (type-compare cards-types)
+(defn max-hand-cards
+  "手牌比较
+  hand-cards-list: [hand-cards1 hand-cards2]
+  hand-cards {:cards-type [:one-pair [:one-pair [[:h :7] [:c :7] [:h :a] [:d :9] [:h :8]]]
+              :other-keys other-vals}
+  hand-cards的map结构中必带cards-type(牌型信息)，用于比较大小；
+  其他字段可以携带其他信息，本单元不会破坏hand-cards的结构。
+
+  返回值：最大的牌，可能有多个，用[hand-cards hand-cards]表示。
+  "
+  [hand-cards-list]
+  (->> (type-compare hand-cards-list)
        last
        last))

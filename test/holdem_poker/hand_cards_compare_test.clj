@@ -1,6 +1,6 @@
-(ns holdem-poker.cards-type-compare-test
+(ns holdem-poker.hand-cards-compare-test
   (:require [clojure.test :refer :all]
-            [holdem-poker.cards-type-compare :refer :all]))
+            [holdem-poker.hand-cards-compare :refer :all]))
 
 (comment
   ;; 评分标准
