@@ -145,15 +145,15 @@
     ))
 
 (deftest easy-play-test
-  (let [cards [{:position 0, :card [:s :2]}
-               {:position 1, :card [:h :t]}
-               {:position 0, :card [:s :3]}
-               {:position 1, :card [:h :9]}
-               {:position :public, :card [:s :4]}
-               {:position :public, :card [:s :5]}
-               {:position :public, :card [:s :6]}
-               {:position :public, :card [:h :9]}
-               {:position :public, :card [:h :t]}]]
+  (let [cards [{:position nil, :card [:s :2]}
+               {:position nil, :card [:h :t]}
+               {:position nil, :card [:s :3]}
+               {:position nil, :card [:h :9]}
+               {:position nil, :card [:s :4]}
+               {:position nil, :card [:s :5]}
+               {:position nil, :card [:s :6]}
+               {:position nil, :card [:h :9]}
+               {:position nil, :card [:h :t]}]]
     (is (= (easy-play cards 2 0)
            [{:position 0 :cards-type [:straight-flush [[:s :6] [:s :5] [:s :4] [:s :3] [:s :2]]]}]))))
 

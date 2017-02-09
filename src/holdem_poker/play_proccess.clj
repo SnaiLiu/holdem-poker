@@ -36,12 +36,12 @@
 (defn position-cards
   "获得各个位置上的牌（各自底牌+公共牌）"
   [cards]
-  (let [a-fn (fn [r position-card]
-               (let [{:keys [position card]} position-card]
-                 (if-let [p-cards (get r position)]
-                   (assoc r position (conj p-cards card))
-                   (merge r {position [card]}))))
-        p-cards-map (reduce a-fn {} cards)
+  (let [fn-update-cards (fn [r position-card]
+                           (let [{:keys [position card]} position-card]
+                             (if-let [p-cards (get r position)]
+                               (assoc r position (conj p-cards card))
+                               (merge r {position [card]}))))
+        p-cards-map (reduce fn-update-cards {} cards)
         public-cards (:public p-cards-map)
         p-cards (dissoc p-cards-map :public)]
     (mapv (fn [[p cs]] {:position p :cards (concat cs public-cards)}) p-cards)))
