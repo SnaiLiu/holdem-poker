@@ -6,32 +6,40 @@
 (defn next-n-position
   "相对于当前位置的下n个位置"
   [position-count curr-position n]
-  (mod (+ curr-position n) position-count))
+  (-> (+ curr-position n)
+      (mod position-count)))
 
-(defn deal-postions-cards
+(defn assign-card-position
+  "指定一副牌中card-index所在牌的"
+  [positions start-index cards card-index]
+  (let [card (get cards card-index)]
+    (->> (- card-index start-index)
+         (get positions)
+         (assoc card :position )
+         (assoc cards card-index))))
+
+(defn deal-positions-cards
   "从第start-index牌开始，将牌发给指定的位置（包括公共牌位置）"
   [cards start-index positions]
-  (let [cards-count (count positions)
-        card-indexes (range start-index (+ cards-count start-index))]
-    (reduce (fn [r card-index]
-              (let [card (get r card-index)]
-                (->> (assoc card :position (get positions (- card-index start-index)))
-                     (assoc r card-index))))
-            cards card-indexes)))
+  (->> (count positions)
+       (+ start-index)
+       (range start-index)
+       (reduce (partial assign-card-position positions start-index) cards)))
 
 (defn deal-hole-cards
   "发两张底牌"
   [cards position-count button-position]
-  (->> (range 0 (* 2 position-count))
+  (->> (* 2 position-count)
+       (range 0)
        (mapv #(next-n-position position-count button-position (+ 2 %)))
-       (deal-postions-cards cards 0)))
+       (deal-positions-cards cards 0)))
 
 (defn deal-n-public-cards
   "从地start-index牌开始，发n张公共牌"
   [cards start-index n]
   (->> (repeat n :public)
        vec
-       (deal-postions-cards cards start-index)))
+       (deal-positions-cards cards start-index)))
 
 (defn position-cards
   "获得各个位置上的牌（各自底牌+公共牌）"

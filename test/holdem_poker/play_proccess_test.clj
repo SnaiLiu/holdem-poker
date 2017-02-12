@@ -43,7 +43,7 @@
 
 (deftest deal-postions-cards-test-测试给多个位置发牌（每个位置一张）
   (let [initial-cards (init-cards)]
-    (is (= (->> (deal-postions-cards initial-cards 0 [:public :public :public])
+    (is (= (->> (deal-positions-cards initial-cards 0 [:public :public :public])
                 (take 3))
            [{:position :public :card [:s :2]}
             {:position :public :card [:s :3]}
