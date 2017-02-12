@@ -16,59 +16,16 @@
          (apply concat [])
          (mapv #(do {:position nil :card %})))))
 
+(defn count-of-num
+  [cards num-str]
+  (->> (filter #(= num-str (last (:card %))) cards)
+       count))
+
 (deftest init-cards-test
-  (is (= (init-cards) [{:position nil, :card [:s :2]}
-                       {:position nil, :card [:s :3]}
-                       {:position nil, :card [:s :4]}
-                       {:position nil, :card [:s :5]}
-                       {:position nil, :card [:s :6]}
-                       {:position nil, :card [:s :7]}
-                       {:position nil, :card [:s :8]}
-                       {:position nil, :card [:s :9]}
-                       {:position nil, :card [:s :t]}
-                       {:position nil, :card [:s :j]}
-                       {:position nil, :card [:s :q]}
-                       {:position nil, :card [:s :k]}
-                       {:position nil, :card [:s :a]}
-                       {:position nil, :card [:h :2]}
-                       {:position nil, :card [:h :3]}
-                       {:position nil, :card [:h :4]}
-                       {:position nil, :card [:h :5]}
-                       {:position nil, :card [:h :6]}
-                       {:position nil, :card [:h :7]}
-                       {:position nil, :card [:h :8]}
-                       {:position nil, :card [:h :9]}
-                       {:position nil, :card [:h :t]}
-                       {:position nil, :card [:h :j]}
-                       {:position nil, :card [:h :q]}
-                       {:position nil, :card [:h :k]}
-                       {:position nil, :card [:h :a]}
-                       {:position nil, :card [:c :2]}
-                       {:position nil, :card [:c :3]}
-                       {:position nil, :card [:c :4]}
-                       {:position nil, :card [:c :5]}
-                       {:position nil, :card [:c :6]}
-                       {:position nil, :card [:c :7]}
-                       {:position nil, :card [:c :8]}
-                       {:position nil, :card [:c :9]}
-                       {:position nil, :card [:c :t]}
-                       {:position nil, :card [:c :j]}
-                       {:position nil, :card [:c :q]}
-                       {:position nil, :card [:c :k]}
-                       {:position nil, :card [:c :a]}
-                       {:position nil, :card [:d :2]}
-                       {:position nil, :card [:d :3]}
-                       {:position nil, :card [:d :4]}
-                       {:position nil, :card [:d :5]}
-                       {:position nil, :card [:d :6]}
-                       {:position nil, :card [:d :7]}
-                       {:position nil, :card [:d :8]}
-                       {:position nil, :card [:d :9]}
-                       {:position nil, :card [:d :t]}
-                       {:position nil, :card [:d :j]}
-                       {:position nil, :card [:d :q]}
-                       {:position nil, :card [:d :k]}
-                       {:position nil, :card [:d :a]}])))
+  (let [cards (init-cards)
+        count-of-nums (map #(count-of-num cards %) [:2 :3 :4 :5 :6 :7 :8 :9 :t :j :q :k :a])]
+    (is (= (count cards) 52))
+    (is (= (every? #(= % 4) count-of-nums) true))))
 
 
 (deftest next-n-position-test
