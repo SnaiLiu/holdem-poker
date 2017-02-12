@@ -41,26 +41,29 @@
        vec
        (deal-positions-cards cards start-index)))
 
+(defn locate-a-card
+  "判断一张牌的所属位置，并添加到其中"
+  [located-cards {:keys [position card]}]
+  (if-let [cards (get located-cards position)]
+    (->> (conj cards card)
+         (assoc located-cards position))
+    (assoc located-cards position [card])))
+
 (defn position-cards
   "获得各个位置上的牌（各自底牌+公共牌）"
   [cards]
-  (let [fn-update-cards (fn [r position-card]
-                           (let [{:keys [position card]} position-card]
-                             (if-let [p-cards (get r position)]
-                               (assoc r position (conj p-cards card))
-                               (merge r {position [card]}))))
-        p-cards-map (reduce fn-update-cards {} cards)
-        public-cards (:public p-cards-map)
-        p-cards (dissoc p-cards-map :public)]
-    (mapv (fn [[p cs]] {:position p :cards (concat cs public-cards)}) p-cards)))
+  (let [located-cards (reduce locate-a-card {} cards)
+        public-cards (:public located-cards)
+        p-cards (dissoc located-cards :public)]
+    (mapv (fn [[p cs]] {:position p :cards (concat cs public-cards)})
+          p-cards)))
 
 (defn max-cards-type
   "获得各个位置上最大的牌型"
   [position-cards]
   (mapv (fn [position-card]
-          (let [cards-type (mct/cards-type (:cards position-card))]
-            {:position (:position position-card)
-             :cards-type cards-type}))
+          {:position   (:position position-card)
+           :cards-type (mct/cards-type (:cards position-card))})
         position-cards))
 
 (defn winner-positions
