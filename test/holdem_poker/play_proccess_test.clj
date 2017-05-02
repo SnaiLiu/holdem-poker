@@ -3,116 +3,64 @@
   (:require [clojure.test :refer :all]
             [holdem-poker.play-proccess :refer :all]))
 
-(defn init-cards
-  "初始化一副牌用于测试
-  card-template:  {:position nil :card [:s :2]}
-  :position有：某个座位 '0、1、2、3'，公共牌'public'"
-  []
-  (let [suits [:s :h :c :d]
-        numbers [:2 :3 :4 :5 :6 :7 :8 :9 :t :j :q :k :a]
-        fn-suit-cards (fn [suit]
-                        (map #(do [suit %]) numbers))]
-    (->> (map fn-suit-cards suits)
-         (apply concat [])
-         (mapv #(do {:position nil :card %})))))
+(def game (new-game (vec (repeat 3 1000)) (init-cards)))
 
-(defn count-of-num
-  "一副牌中某个牌面的张数"
-  [cards num-str]
-  (->> (filter #(= num-str (last (:card %))) cards)
-       count))
+(deftest advance-game-test
+  (are [rslt init-game ops]
+    (= rslt (-> (advance-game init-game ops) :winners set))
+    ;简单游戏过程
+    #{[2 300]} game
+    [[:blind 1 100] [:blind 2 200] [:fold 0] [:fold 1]]
 
-(deftest init-cards-test-测试初始化一副牌
-  (let [cards (init-cards)
-        count-of-nums (map #(count-of-num cards %) [:2 :3 :4 :5 :6 :7 :8 :9 :t :j :q :k :a])]
-    (is (= (count cards) 52))
-    (is (= (every? #(= % 4) count-of-nums) true))))
+    ;简单摊牌过程
+    #{[1 2200]} game
+    [[:blind 1 100] [:blind 2 200] [:bet 0 200] [:all-in 1] [:all-in 2] [:fold 0]]
 
+    #{[0 3000]} game
+    [[:bet 1 100] [:bet 2 200] [:bet 0 200] [:all-in 1] [:all-in 2] [:all-in 0]]
 
-(deftest next-n-position-test-测试当前位置的下n个位置
-  (are [position-count curr-position n result]
-    (= (next-n-position position-count curr-position n) result)
+    ;分池摊牌
+    #{[0 1000] [1 1000]}
+    (new-game [1000 1000] [{:card [:s :a]} {:card [:h :a]} {:card [:s :k]} {:card [:h :k]}
+                           {:card [:c :2]} {:card [:c :5]} {:card [:c :6]} {:card [:c :7]}
+                           {:card [:c :8]} {:card [:c :9]} {:card [:c :t]} {:card [:c :j]}])
+    [[:all-in 1] [:all-in 0]]
+    ;
+    ;多边池摊牌
+    #{[1 4000] [2 1000]}
+    (new-game [1000 2000 3000] (init-cards))
+    [[:all-in 1] [:all-in 2] [:fold 0]]
 
-    2 0 1 1
-    2 0 2 0
-    2 1 3 0
+    #{[1 200] [0 200] [0 300]}
+    (new-game [400 100 200] [{:card [:s :a]} {:card [:h :q]} {:card [:c :2]} {:card [:s :k]}
+                             {:card [:c :q]} {:card [:c :6]} {:card [:h :7]}
+                             {:card [:s :q]} {:card [:s :j]} {:card [:s :t]} {:card [:h :6]}
+                             {:card [:h :j]} {:card [:h :5]} {:card [:c :7]}])
+    [[:all-in 1] [:all-in 2] [:all-in 0]]
 
-    3 0 1 1
-    3 1 1 2
-    3 1 2 0))
+    ;简单翻牌
+    #{[0 600]} game
+    [[:blind 1 100] [:blind 2 200] [:call 0] [:call 1] [:check 2]
+     [:check 1] [:check 2] [:check 0]
+     [:check 1] [:check 2] [:check 0]
+     [:check 1] [:check 2] [:check 0]
+     ]
 
-(deftest deal-postions-cards-test-测试给多个位置发牌（每个位置一张）
-  (let [initial-cards (init-cards)]
-    (is (= (->> (deal-positions-cards initial-cards 0 [:public :public :public])
-                (take 3))
-           [{:position :public :card [:s :2]}
-            {:position :public :card [:s :3]}
-            {:position :public :card [:s :4]}]
-           ))))
+    ;过滤无效位置操作和游戏结束后操作
+    #{[2 300]} game
+    [[:bet 0 100] [:bet 1 100] [:bet 2 200] [:fold 2] [:fold 0] [:fold 1] [:bet 2 200]]
 
-;; 第一步，每人发牌2张底牌
-(deftest deal-hole-cards-test-测试每人发2张底牌
-  (let [initial-cards (init-cards)]
-    (is (= (deal-hole-cards initial-cards 3 0)
-           (concat [{:position 2 :card [:s :2]}
-                    {:position 0 :card [:s :3]}
-                    {:position 1 :card [:s :4]}
-                    {:position 2 :card [:s :5]}
-                    {:position 0 :card [:s :6]}
-                    {:position 1 :card [:s :7]}]
-                   (vec (take-last (- 52 6) initial-cards)))))))
+    ; Sample from Wiki
+    #{[1 26]} (new-game [100 100 100 100]
+                        [{:card [:h :k]} {:card [:s :q]} {:card [:s :k]} {:card [:h :a]} {:card [:s :a]}
+                         {:card [:h :9]} {:card [:h :j]} {:card [:d :k]} {:card nil}
+                         {:card [:c :9]} {:card [:c :k]} {:card [:h :3]} {:card nil}
+                         {:card [:s :5]} {:card nil} {:card [:d :9]}]
+                        #_(mk-cards "HK SQ SK HA SA H9 HJ DK nil C9 CK H3 nil S5 nil D9"))
+    [[:blind 1 1] [:blind 2 2] [:fold 3] [:call 0] [:call 1] [:check 2]
+     [:check 1] [:bet 2 2] [:bet 0 4] [:call 1] [:call 2]
+     [:check 1] [:check 2] [:check 0]
+     [:bet 1 4] [:call 2] [:fold 0]]))
 
-(deftest deal-n-public-cards-test-测试发n张公共牌
-  (let [initial-cards (init-cards)
-        deal-resut-cards (deal-n-public-cards initial-cards 6 3)]
-    (is (= (take 3 (take-last (- 52 6) deal-resut-cards))
-           [{:position :public :card [:s :8]}
-            {:position :public :card [:s :9]}
-            {:position :public :card [:s :t]}]
-           ))))
-
-(deftest position-cards-test-测试从一副牌中获取每个位置所拥有的牌
-  (let [        cards [{:position 0 :card [:s :2]}
-                       {:position 1 :card [:s :3]}
-                       {:position 0 :card [:s :4]}
-                       {:position 1 :card [:s :5]}
-                       {:position :public :card [:s :6]}
-                       {:position :public :card [:s :7]}
-                       {:position :public :card [:s :8]}
-                       {:position :public :card [:s :9]}
-                       {:position :public :card [:s :t]}]]
-
-    (is (= (position-cards cards)
-           [{:position 0 :cards [[:s :2] [:s :4] [:s :6] [:s :7] [:s :8] [:s :9] [:s :t]]}
-            {:position 1 :cards [[:s :3] [:s :5] [:s :6] [:s :7] [:s :8] [:s :9] [:s :t]]}]))))
-
-(deftest max-cards-type-test-获取各个位置最大牌型
-  (let [position-cards [{:position 0 :cards [[:s :2] [:s :3] [:s :4] [:s :5] [:s :6] [:d :3] [:d :4]]}
-                        {:position 1 :cards [[:c :7] [:d :9] [:s :7] [:h :7] [:d :k] [:d :7] [:d :a]]}]]
-    (is (= (max-cards-type position-cards)
-           [{:position 0 :cards-type [:straight-flush [[:s :6] [:s :5] [:s :4] [:s :3] [:s :2]]]}
-            {:position 1 :cards-type [:4-of-a-kind [[:s :7] [:c :7] [:h :7] [:d :7] [:d :a]]]}]
-           ))
-    ))
-
-(deftest winner-positions-test-测试赢的位置
-  (let [cards [{:position 0 :cards-type [:straight-flush [[:s :6] [:s :5] [:s :4] [:s :3] [:s :2]]]}
-               {:position 1 :cards-type [:4-of-a-kind [[:s :7] [:c :7] [:h :7] [:d :7] [:d :a]]]}]]
-    (is (= (winner-positions cards)
-           [{:position 0 :cards-type [:straight-flush [[:s :6] [:s :5] [:s :4] [:s :3] [:s :2]]]}]))
-    ))
-
-(deftest easy-play-test-测试打牌过程
-  (let [cards [{:position nil :card [:s :2]}
-               {:position nil :card [:h :t]}
-               {:position nil :card [:s :3]}
-               {:position nil :card [:h :9]}
-               {:position nil :card [:s :4]}
-               {:position nil :card [:s :5]}
-               {:position nil :card [:s :6]}
-               {:position nil :card [:h :9]}
-               {:position nil :card [:h :t]}]]
-    (is (= (easy-play cards 2 0)
-           [{:position 0 :cards-type [:straight-flush [[:s :6] [:s :5] [:s :4] [:s :3] [:s :2]]]}]))))
 
 
