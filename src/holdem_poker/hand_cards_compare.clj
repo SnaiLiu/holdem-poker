@@ -50,10 +50,17 @@
          (apply merge)
          (sort-by first))))
 
+(defn compare-hands
+  "比较两手牌的大小， 注意cards必须是从大到小排列的牌组"
+  [[type1 cards1] [type2 cards2]]
+  (let [score1 (type-score [type1 cards1])
+        score2 (type-score [type2 cards2])]
+    (compare score1 score2)))
+
 (defn max-hand-cards
   "手牌比较
   hand-cards-list: [hand-cards1 hand-cards2]
-  hand-cards {:cards-type [:one-pair [:one-pair [[:h :7] [:c :7] [:h :a] [:d :9] [:h :8]]]
+  hand-cards {:cards-type [:one-pair [[:h :7] [:c :7] [:h :a] [:d :9] [:h :8]]
               :other-keys other-vals}
   hand-cards的map结构中必带cards-type(牌型信息)，用于比较大小；
   其他字段可以携带其他信息，本单元不会破坏hand-cards的结构。
